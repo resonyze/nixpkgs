@@ -79,7 +79,8 @@ in stdenv.mkDerivation rec {
     Version=1.0
     Name=mupdf
     Comment=PDF viewer
-    Exec=$bin/bin/mupdf-x11 %f
+    MimeType=application/pdf;application/x-pdf;application/x-cbz;application/oxps;application/vnd.ms-xpsdocument;application/epub+zip;image/png;image/jpeg;image/pjpeg;image/gif;image/bmp;image/jpx;image/jp2;image/vnd.ms-photo;image/jxr;image/x-portable-bitmap;image/x-portable-greymap;image/x-portable-pixmap;image/x-portable-arbitrarymap;image/png;
+    Exec=$bin/bin/mupdf-gl %f
     Terminal=false
     EOF
   '';
