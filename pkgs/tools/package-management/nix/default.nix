@@ -64,7 +64,12 @@ common =
         # https://github.com/NixOS/nixpkgs/issues/45462
         if is20 then ''
           mkdir -p $out/lib
-          cp ${boost}/lib/libboost_context* $out/lib
+          cp -pd ${boost}/lib/{libboost_context*,libboost_thread*,libboost_system*} $out/lib
+          rm -f $out/lib/*.a
+          ${lib.optionalString stdenv.isLinux ''
+            chmod u+w $out/lib/*.so.*
+            patchelf --set-rpath $out/lib:${stdenv.cc.cc.lib}/lib $out/lib/libboost_thread.so.*
+          ''}
         '' else ''
           configureFlagsArray+=(BDW_GC_LIBS="-lgc -lgccpp")
         '';
@@ -124,7 +129,8 @@ common =
         inherit fromGit;
 
         perl-bindings = if includesPerl then nix else stdenv.mkDerivation {
-          name = "nix-perl-${version}";
+          pname = "nix-perl";
+          inherit version;
 
           inherit src;
 
@@ -168,10 +174,10 @@ in rec {
   };
 
   nixStable = callPackage common (rec {
-    name = "nix-2.2.2";
+    name = "nix-2.3";
     src = fetchurl {
       url = "http://nixos.org/releases/nix/${name}/${name}.tar.xz";
-      sha256 = "f80a1b4f9837a8d33209f0b7769d5038335459ff4303eccf3e9217a9eca8594c";
+      sha256 = "b1d1b4d87390941fc64b19776f1ed9e3871231d38f5a1f295dd13925acd3a98d";
     };
 
     inherit storeDir stateDir confDir boehmgc;
@@ -181,12 +187,12 @@ in rec {
 
   nixUnstable = lib.lowPrio (callPackage common rec {
     name = "nix-2.3${suffix}";
-    suffix = "pre6631_e58a7144";
+    suffix = "pre6895_84de821";
     src = fetchFromGitHub {
       owner = "NixOS";
       repo = "nix";
-      rev = "e58a71442ad4a538b48fc7a9938c3690628c4741";
-      sha256 = "1hbjhnvjbh8bi8cjjgyrj4z1gw03ws12m2wi5azzj3rmhnh4c802";
+      rev = "84de8210040580ce7189332b43038d52c56a9689";
+      sha256 = "062pdly0m2hk8ly8li5psvpbj1mi7m1a15k8wyzf79q7294l5li3";
     };
     fromGit = true;
 
@@ -195,12 +201,12 @@ in rec {
 
   nixFlakes = lib.lowPrio (callPackage common rec {
     name = "nix-2.3${suffix}";
-    suffix = "pre20190612_06010ea";
+    suffix = "pre20190830_04np4n6";
     src = fetchFromGitHub {
       owner = "NixOS";
       repo = "nix";
-      rev = "06010eaf199005a393f212023ec5e8bc97978537";
-      sha256 = "1fq99fmlag5hxvgzxrclgfsnc1fhhfwnslyshad1934wi9nzx1s2";
+      rev = "aa82f8b2d2a2c42f0d713e8404b668cef1a4b108";
+      hash = "sha256-09ZHwpxf9pRDacCSGTHYx+fnKYgxKx8G37Jqb4wl1xI=";
     };
     fromGit = true;
 

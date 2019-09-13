@@ -699,7 +699,7 @@ passthru = {
      </para>
     </listitem>
    </varlistentry>
-   <varlistentry>
+   <varlistentry xml:id="var-passthru-updateScript">
     <term>
      <varname>passthru.updateScript</varname>
     </term>
@@ -786,7 +786,7 @@ passthru.updateScript = [ ../../update.sh pname "--requested-release=unstable" ]
         set, the default value is used, which is <literal>$prePhases
         unpackPhase patchPhase $preConfigurePhases configurePhase
         $preBuildPhases buildPhase checkPhase $preInstallPhases installPhase
-        fixupPhase $preDistPhases distPhase $postPhases</literal>.
+        fixupPhase installCheckPhase $preDistPhases distPhase $postPhases</literal>.
        </para>
        <para>
         Usually, if you just want to add a few phases, it’s more convenient
@@ -989,6 +989,16 @@ passthru.updateScript = [ ../../update.sh pname "--requested-release=unstable" ]
     </varlistentry>
     <varlistentry>
      <term>
+      <varname>dontUnpack</varname>
+     </term>
+     <listitem>
+      <para>
+       Set to true to skip the unpack phase.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
       <varname>dontMakeSourcesWritable</varname>
      </term>
      <listitem>
@@ -1106,6 +1116,16 @@ passthru.updateScript = [ ../../update.sh pname "--requested-release=unstable" ]
       <para>
        A list of strings passed as additional arguments to the configure
        script.
+      </para>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      <varname>dontConfigure</varname>
+     </term>
+     <listitem>
+      <para>
+       Set to true to skip the configure phase.
       </para>
      </listitem>
     </varlistentry>
@@ -1579,6 +1599,16 @@ installTargets = "install-bin install-doc";</programlisting>
 
    <variablelist>
     <title>Variables controlling the fixup phase</title>
+    <varlistentry>
+     <term>
+      <varname>dontFixup</varname>
+     </term>
+     <listitem>
+      <para>
+        Set to true to skip the fixup phase.
+      </para>
+     </listitem>
+    </varlistentry>
     <varlistentry>
      <term>
       <varname>dontStrip</varname>
@@ -2599,13 +2629,11 @@ addEnvHooks "$hostOffset" myBashFunction
     </varlistentry>
     <varlistentry>
      <term>
-      GStreamer
+      GNOME platform
      </term>
      <listitem>
       <para>
-       Adds the GStreamer plugins subdirectory of each build input to the
-       <envar>GST_PLUGIN_SYSTEM_PATH_1_0</envar> or
-       <envar>GST_PLUGIN_SYSTEM_PATH</envar> environment variable.
+       Hooks related to GNOME platform and related libraries like GLib, GTK and GStreamer are described in <xref linkend="sec-language-gnome" />.
       </para>
      </listitem>
     </varlistentry>
@@ -2682,6 +2710,49 @@ nativeBuildInputs = [ breakpointHook ];
         <command>nix build</command>.
        </para>
       </note>
+     </listitem>
+    </varlistentry>
+    <varlistentry>
+     <term>
+      installShellFiles
+     </term>
+     <listitem>
+      <para>
+       This hook helps with installing manpages and shell completion files. It
+       exposes 2 shell functions <literal>installManPage</literal> and
+       <literal>installShellCompletion</literal> that can be used from your
+       <literal>postInstall</literal> hook.
+      </para>
+      <para>
+       The <literal>installManPage</literal> function takes one or more paths
+       to manpages to install. The manpages must have a section suffix, and may
+       optionally be compressed (with <literal>.gz</literal> suffix). This
+       function will place them into the correct directory.
+      </para>
+      <para>
+       The <literal>installShellCompletion</literal> function takes one or more
+       paths to shell completion files. By default it will autodetect the shell
+       type from the completion file extension, but you may also specify it by
+       passing one of <literal>--bash</literal>, <literal>--fish</literal>, or
+       <literal>--zsh</literal>. These flags apply to all paths listed after
+       them (up until another shell flag is given). Each path may also have a
+       custom installation name provided by providing a flag <literal>--name
+       NAME</literal> before the path. If this flag is not provided, zsh
+       completions will be renamed automatically such that
+       <literal>foobar.zsh</literal> becomes <literal>_foobar</literal>.
+<programlisting>
+nativeBuildInputs = [ installShellFiles ];
+postInstall = ''
+  installManPage doc/foobar.1 doc/barfoo.3
+  # explicit behavior
+  installShellCompletion --bash --name foobar.bash share/completions.bash
+  installShellCompletion --fish --name foobar.fish share/completions.fish
+  installShellCompletion --zsh --name _foobar share/completions.zsh
+  # implicit behavior
+  installShellCompletion share/completions/foobar.{bash,fish,zsh}
+'';
+</programlisting>
+      </para>
      </listitem>
     </varlistentry>
     <varlistentry>

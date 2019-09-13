@@ -2,11 +2,11 @@
 
 stdenv.mkDerivation rec {
   pname = "txr";
-  version = "217";
+  version = "224";
 
   src = fetchurl {
     url = "http://www.kylheku.com/cgit/txr/snapshot/${pname}-${version}.tar.bz2";
-    sha256 = "0q4v7zsbflzvw1xskacdnj0z8qng8c9pcvaa54f2jnnq7crkrd4q";
+    sha256 = "10xz140i4sam9r7r8rz5mz5jbwal7xvaimzrb7lmisqsvby2qcw7";
   };
 
   nativeBuildInputs = [ bison flex ];

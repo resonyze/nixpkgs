@@ -7,6 +7,8 @@
 
 , libiconv ? null, ncurses
 
+, enableDwarf ? !stdenv.isDarwin, elfutils # for DWARF support
+
 , useLLVM ? !stdenv.targetPlatform.isx86
 , # LLVM is conceptually a run-time-only depedendency, but for
   # non-x86, we need LLVM to bootstrap later stages, so it becomes a
@@ -73,7 +75,8 @@ let
   # Splicer will pull out correct variations
   libDeps = platform: stdenv.lib.optional enableTerminfo [ ncurses ]
     ++ stdenv.lib.optional (!enableIntegerSimple) gmp
-    ++ stdenv.lib.optional (platform.libc != "glibc" && !targetPlatform.isWindows) libiconv;
+    ++ stdenv.lib.optional (platform.libc != "glibc" && !targetPlatform.isWindows) libiconv
+    ++ stdenv.lib.optional enableDwarf elfutils;
 
   toolsForTarget = [
     pkgsBuildTarget.targetPackages.stdenv.cc
@@ -98,7 +101,7 @@ stdenv.mkDerivation (rec {
   outputs = [ "out" "doc" ];
 
   patches = [
-    (fetchpatch rec { # https://github.com/haskell/haddock/issues/900
+    (fetchpatch { # https://github.com/haskell/haddock/issues/900
      url = "https://patch-diff.githubusercontent.com/raw/haskell/haddock/pull/983.diff";
      name = "loadpluginsinmodules.diff";
      sha256 = "0bvvv0zsfq2581zsir97zfkggc1kkircbbajc2fz3b169ycpbha1";
@@ -119,7 +122,8 @@ stdenv.mkDerivation (rec {
     export CC="${targetCC}/bin/${targetCC.targetPrefix}cc"
     export CXX="${targetCC}/bin/${targetCC.targetPrefix}cxx"
     # Use gold to work around https://sourceware.org/bugzilla/show_bug.cgi?id=16177
-    export LD="${targetCC.bintools}/bin/${targetCC.bintools.targetPrefix}ld${stdenv.lib.optionalString targetPlatform.isAarch32 ".gold"}"
+    # and more generally have a faster linker.
+    export LD="${targetCC.bintools}/bin/${targetCC.bintools.targetPrefix}ld${stdenv.lib.optionalString targetPlatform.isLinux ".gold"}"
     export AS="${targetCC.bintools.bintools}/bin/${targetCC.bintools.targetPrefix}as"
     export AR="${targetCC.bintools.bintools}/bin/${targetCC.bintools.targetPrefix}ar"
     export NM="${targetCC.bintools.bintools}/bin/${targetCC.bintools.targetPrefix}nm"
@@ -175,6 +179,8 @@ stdenv.mkDerivation (rec {
     "CONF_GCC_LINKER_OPTS_STAGE2=-fuse-ld=gold"
   ] ++ stdenv.lib.optionals (disableLargeAddressSpace) [
     "--disable-large-address-space"
+  ] ++ stdenv.lib.optional enableDwarf [
+    "--enable-dwarf-unwind"
   ];
 
   # Make sure we never relax`$PATH` and hooks support for compatability.
